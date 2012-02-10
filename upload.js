@@ -6,8 +6,8 @@ var http = require('http'),
     knox = require('knox'),
     server;
 
-var TEST_PORT = process.env.PORT || 3003;	
-var TEST_TMP = "/tmp";
+var PORT = process.env.PORT || 3003;	
+var TMP = "/tmp";
 
 var s3Client = knox.createClient({
     key: 'AKIAIIZEL3OLHCBIZBBQ'
@@ -18,7 +18,7 @@ var s3Client = knox.createClient({
 
 function upload_complete(res,fields){
 		console.log('-> save done');
-		var stream = fs.createReadStream(TEST_TMP+"/test.mov");
+		var stream = fs.createReadStream(TMP+"/test.mov");
 		s3Client.putStream(stream, '/test.mov', function(err, result){
 		  	console.log("put to s3!")
 	        res.writeHead(200, {'content-type': 'text/plain'});
@@ -47,8 +47,8 @@ server = http.createServer(function(req, res) {
         files = [],
         fields = [];
 
-    form.uploadDir = TEST_TMP;
-	fileStream = fs.createWriteStream(TEST_TMP+"/test.mov")
+    form.uploadDir = TMP;
+	fileStream = fs.createWriteStream(TMP+"/test.mov")
 	
     // Add error handler
     fileStream.addListener("error", function(err) {
@@ -74,11 +74,8 @@ server = http.createServer(function(req, res) {
 		            // Handle request completion, as all chunks were already written
 		            upload_complete(res,fields);
 		
-		
-			
 		   });
 		
-	
       });
 
 
@@ -88,8 +85,8 @@ server = http.createServer(function(req, res) {
     		form.handlePart(part);
   		}else{
 			part.addListener('data', function(data) {
-			    console.log(part.filename);
-				console.log(data);
+			    console.log("receiving " + data.length + " bytes of " + part.filename );
+			
 				// Pause receiving request data (until current chunk is written)
 			    req.pause();
 			    fileStream.write(data, "binary");
@@ -103,6 +100,6 @@ server = http.createServer(function(req, res) {
     res.end('404');
   }
 });
-server.listen(TEST_PORT);
+server.listen(PORT);
 
-console.log('listening on http://localhost:'+TEST_PORT+'/');
+console.log('listening on http://localhost:'+PORT+'/');
