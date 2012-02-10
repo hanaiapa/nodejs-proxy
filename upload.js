@@ -6,7 +6,7 @@ var http = require('http'),
     knox = require('knox'),
     server;
 
-var TEST_PORT = 3003;	
+var TEST_PORT = process.env.PORT || 3003;	
 var TEST_TMP = "./tmp";
 
 var s3Client = knox.createClient({
