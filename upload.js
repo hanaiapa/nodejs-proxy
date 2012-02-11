@@ -65,7 +65,7 @@ function on_header_verified(env){
 	}
 	var data = {
 		"media_type":"photo",
-		"media_url": BUCKET+".s3.amazonaws.com/"+env['uuid']+"/r600x600.jpg"
+		"media_url": "http://"+BUCKET+".s3.amazonaws.com/"+env['uuid']+"/r600x600.jpg"
 	}
 	var post_req = http.request(options, function(res) {
 		console.log("sent")
