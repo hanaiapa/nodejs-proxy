@@ -1,6 +1,7 @@
 var http = require('http'),
     util = require('util'),
  	fs = require('fs'),
+ 	qs = require('qs'),
     formidable = require('formidable'),
     knox = require('knox'),
  	exec = require('child_process').exec,
@@ -8,11 +9,12 @@ var http = require('http'),
 
 var PORT = process.env.PORT || 3003;	
 var TMP = "/tmp";
-
+var API_URL = "chopin.herokuapp.com"
+var BUCKET = "com.picbounce.incoming"
 var s3Client = knox.createClient({
     key: 'AKIAIIZEL3OLHCBIZBBQ'
   , secret: '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'
-  , bucket: 'com.picbounce.incoming'
+  , bucket: BUCKET
 });
 
 var image_convert_styles = [
@@ -20,10 +22,27 @@ var image_convert_styles = [
 	{"style" : "s600x600", "options": '-define jpeg: -resize "600x600^" -gravity center -crop 600x600+0+0 -auto-orient -quality 90'},
 	{"style" : "r600x600", "options" : '-resize "600x600>" -auto-orient'},
 ]
-
+var required_fields = ["key"]
 
 function on_header_receive(env){
 	console.log(env['uuid'] + ' received headers');
+	var headers = {
+		'x-verify-credentials-authorization': env['req'].headers['x-verify-credentials-authorization'],
+		'x-auth-service-provider': env['req'].headers['x-auth-service-provider']
+	}
+	var options = {
+		host: API_URL,
+		path: '/api/v1/posts/oauth_echo',
+		headers: headers,
+		method: 'POST'
+	}
+	var auth_req = http.request(options, function(res) {
+		console.log("sent")
+		trigger_local_event(env,"header_verification","complete");
+	});
+	auth_req.write("")
+	auth_req.end()
+	
 	console.log(env['req'].headers['x-verify-credentials-authorization'])
 	console.log(env['req'].headers['x-auth-service-provider'])
 }
@@ -32,6 +51,29 @@ function on_save_complete(env){
 	for (var i in image_convert_styles){
 		convert(env['uuid'],image_convert_styles[i]["style"],image_convert_styles[i]["options"],convert_callback(env, image_convert_styles[i]["style"]))
 	}
+}
+function on_header_verified(env){
+	var headers = {
+		'x-verify-credentials-authorization': env['req'].headers['x-verify-credentials-authorization'],
+		'x-auth-service-provider': env['req'].headers['x-auth-service-provider']
+	}
+	var options = {
+		host: API_URL,
+		path: '/api/v1/posts/oauth_echo',
+		headers: headers,
+		method: 'POST'
+	}
+	var data = {
+		"media_type":"photo",
+		"media_url": BUCKET+".s3.amazonaws.com/"+env['uuid']+"/r600x600.jpg"
+	}
+	var post_req = http.request(options, function(res) {
+		console.log("sent")
+		trigger_local_event(env,"data_posted","complete");
+	});
+	post_req.write(qs.stringify(data));
+	post_req.end();
+	
 }
 
 function on_convert_complete(env){
@@ -42,7 +84,6 @@ function on_convert_complete(env){
 	env['res'].end();
 }
 
-
 function convert_callback(env,style){
 	return  function(error, stdout, stderr){
 		console.log(env['uuid'] + " converting to " +TMP+"/"+env['uuid']+"-"+style+".jpg" + " complete ")
@@ -50,7 +91,7 @@ function convert_callback(env,style){
 		var stream = fs.createReadStream(TMP+"/"+env['uuid']+"-"+style+".jpg");
 		s3Client.putStream(stream, env['uuid']+"/"+style+".jpg", function(err, result){
 			console.log(env['uuid'] + ' '+style+' upload to s3 complete');
-			triggerEvent(env,style,"complete");
+			trigger_local_event(env,style,"complete");
 		});
 	}
 	
@@ -64,15 +105,23 @@ function convert(uuid,style,options,callback){
 	return output_path
 }
 
-function triggerEvent(env,key,result){
+function trigger_local_event(env,key,result){
 	env['event_queue'][key] = result;
 	console.log(env['event_queue'])
 	var all_converts_complete = true;
 	for (var i in  image_convert_styles){
 		all_converts_complete = all_converts_complete && env['event_queue'][image_convert_styles[i]["style"]] == "complete"
 	}
-	if (all_converts_complete){
+	if (env['event_queue']["header_verification"] == "complete" && env['event_queue']["on_header_verified"] == null){
+		env['event_queue']["on_header_verified"] = "started"
+		on_header_verified(env)
+		env['event_queue']["on_header_verified"] = "complete"
+	}
+	
+	if (all_converts_complete && env['event_queue']["header_verification"] == "complete" && env['event_queue']["data_posted"] == "complete" && env['event_queue']["on_convert_complete"] == null){
+		env['event_queue']["on_convert_complete"] = "started"
 		on_convert_complete(env)
+		env['event_queue']["on_convert_complete"] = "complete"
 	}	
 }
 
@@ -120,6 +169,7 @@ server = http.createServer(function(req, res) {
 	  .on('field', function(field, value) {
         console.log(env['uuid'] + " " + field + " => " + value);
         env['fields'].push([field, value]);
+		trigger_local_event(env,"field_"+field,"complete")
       })
    
       .on('end', function() {
