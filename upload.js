@@ -112,7 +112,7 @@ function trigger_local_event(env,key,result){
 	for (var i in  image_convert_styles){
 		all_converts_complete = all_converts_complete && env['event_queue'][image_convert_styles[i]["style"]] == "complete"
 	}
-	if (env['event_queue']["header_verification"] == "complete" && env['event_queue']["on_header_verified"] == null){
+	if (env['event_queue']["r600x600"] == "complete" && env['event_queue']["header_verification"] == "complete" && env['event_queue']["on_header_verified"] == null){
 		env['event_queue']["on_header_verified"] = "started"
 		on_header_verified(env)
 		env['event_queue']["on_header_verified"] = "complete"
