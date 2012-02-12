@@ -45,6 +45,7 @@ function on_header_receive(env){
 }
 
 function on_save_complete(env){
+	console.log(env['uuid'] + ' save complete');
 	for (var i in image_convert_styles){
 		convert(env['uuid'],image_convert_styles[i]["style"],image_convert_styles[i]["options"],convert_callback(env, image_convert_styles[i]["style"]))
 	}
