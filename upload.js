@@ -5,6 +5,7 @@ var http = require('http'),
     formidable = require('formidable'),
     knox = require('knox'),
  	exec = require('child_process').exec,
+ 	app = require('express').createServer(),
     server;
 
 var PORT = process.env.PORT || 3003;	
@@ -132,8 +133,7 @@ function generate_uuid() {
   return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-server = http.createServer(function(req, res) {
-  if (req.url == '/') {
+app.get('/', function(req, res) {
 	console.log("works!")
     res.writeHead(200, {'content-type': 'text/html'});
     res.end(
@@ -143,8 +143,9 @@ server = http.createServer(function(req, res) {
       '<input type="submit" value="Upload">'+
       '</form>'
     );
+});
 
-  } else if (req.url == '/v1/upload') {
+app.post('/v1/upload', function(req, res) {
 	var env = {}
 	env['uuid'] = generate_uuid();
 	env['req'] = req;
@@ -195,11 +196,7 @@ server = http.createServer(function(req, res) {
 		}
 	}
     form.parse(req);
-  } else {
-    res.writeHead(404, {'content-type': 'text/plain'});
-    res.end('404');
-  }
 });
-server.listen(PORT);
+app.listen(PORT);
 
 console.log('listening on http://localhost:'+PORT+'/');
