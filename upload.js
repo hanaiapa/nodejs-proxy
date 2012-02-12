@@ -188,12 +188,12 @@ app.post('/v1/upload', function(req, res) {
 	form.on('error', function(err) {
 		console.log(err)
 		 res.writeHead(500,{})
-		 res.close("")
+		 res.end("")
       });
-	form.on('aborted', function() {
+	form.on('abort', function() {
 		console.log("abort")
 		 res.writeHead(500,{})
-		 res.close("")
+		 res.end("")
       });
 
 	form.onPart = function(part) {
