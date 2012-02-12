@@ -33,14 +33,13 @@ function on_header_receive(env){
 		headers: headers,
 		method: 'POST'
 	}
-	/*var auth_req = http.request(options, function(res) {
+	var auth_req = http.request(options, function(res) {
 		console.log("sent")
 		trigger_local_event(env,"header_verification","complete");
 	});
 	auth_req.write("")
 	auth_req.end()
-	*/
-	trigger_local_event(env,"header_verification","complete");
+	
 	console.log(env['req'].headers['x-verify-credentials-authorization'])
 	console.log(env['req'].headers['x-auth-service-provider'])
 }
@@ -159,8 +158,7 @@ app.post('/v1/upload', function(req, res) {
 	env['event_queue'] = {};
 	env['fields'] =	[]
 	on_header_receive(env);
-    var form = new formidable.IncomingForm()
-    form.uploadDir = TMP;
+    var form = new formidable.IncomingForm();
 	
 	
 	//prepare disk write
@@ -172,14 +170,13 @@ app.post('/v1/upload', function(req, res) {
         req.resume();
     });
 
-    form
-	  .on('field', function(field, value) {
+    
+	form.on('field', function(field, value) {
         console.log(env['uuid'] + " " + field + " => " + value);
         env['fields'].push([field, value]);
 		trigger_local_event(env,"field_"+field,"complete")
       })
-   
-      .on('end', function() {
+     form.on('end', function() {
 		fileStream.addListener("drain", function() {
 			 console.log(env['uuid'] + ' save completing');
 			 req.resume();
@@ -187,6 +184,16 @@ app.post('/v1/upload', function(req, res) {
 		     // Handle request completion, as all chunks were already written
 		     on_save_complete(env);
 		});
+      });
+	form.on('error', function(err) {
+		console.log(err)
+		 res.writeHead(500,{})
+		 res.close("")
+      });
+	form.on('abort', function() {
+		console.log("abort")
+		 res.writeHead(500,{})
+		 res.close("")
       });
 
 	form.onPart = function(part) {
