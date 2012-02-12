@@ -181,6 +181,7 @@ app.post('/v1/upload', function(req, res) {
    
       .on('end', function() {
 		fileStream.addListener("drain", function() {
+			 console.log(env['uuid'] + ' save completing');
 			 req.resume();
 		     fileStream.end();
 		     // Handle request completion, as all chunks were already written
