@@ -33,13 +33,14 @@ function on_header_receive(env){
 		headers: headers,
 		method: 'POST'
 	}
-	var auth_req = http.request(options, function(res) {
+	/*var auth_req = http.request(options, function(res) {
 		console.log("sent")
 		trigger_local_event(env,"header_verification","complete");
 	});
 	auth_req.write("")
 	auth_req.end()
-	
+	*/
+	trigger_local_event(env,"header_verification","complete");
 	console.log(env['req'].headers['x-verify-credentials-authorization'])
 	console.log(env['req'].headers['x-auth-service-provider'])
 }
@@ -151,7 +152,6 @@ app.get('/', function(req, res) {
 
 app.post('/v1/upload', function(req, res) {
 	
-	
 	var env = {}
 	env['uuid'] = generate_uuid();
 	env['req'] = req;
@@ -169,7 +169,7 @@ app.post('/v1/upload', function(req, res) {
         console.log("Got error while writing to file '" + env['uuid'] + "': ", err);
     });
     fileStream.addListener("drain", function() {
-        //req.resume();
+        req.resume();
     });
 
     form
@@ -182,7 +182,7 @@ app.post('/v1/upload', function(req, res) {
       .on('end', function() {
 		fileStream.addListener("drain", function() {
 			 console.log(env['uuid'] + ' save completing');
-			 //req.resume();
+			 req.resume();
 		     fileStream.end();
 		     // Handle request completion, as all chunks were already written
 		     on_save_complete(env);
@@ -198,7 +198,7 @@ app.post('/v1/upload', function(req, res) {
 				console.log(env['uuid'] + " receiving " + data.length + " bytes of " + part.filename );
 			
 				// Pause receiving request data (until current chunk is written)
-				//req.pause();
+				req.pause();
 				fileStream.write(data, "binary");
 			});
 		}
