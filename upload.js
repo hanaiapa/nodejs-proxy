@@ -12,11 +12,6 @@ var PORT = process.env.PORT || 3003;
 var TMP = "/tmp";
 var API_URL = "chopin.herokuapp.com"
 var BUCKET = "com.picbounce.incoming"
-var s3Client = knox.createClient({
-    key: 'AKIAIIZEL3OLHCBIZBBQ'
-  , secret: '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'
-  , bucket: BUCKET
-});
 
 var image_convert_styles = [
 	{"style" : "s150x150", "options": '-define jpeg: -resize "150x150^" -gravity center -crop 150x150+0+0 -auto-orient -quality 90'},
@@ -87,6 +82,13 @@ function on_convert_complete(env){
 
 function convert_callback(env,style){
 	return  function(error, stdout, stderr){
+		
+		var s3Client =	knox.createClient({
+		    key: 'AKIAIIZEL3OLHCBIZBBQ'
+		  , secret: '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'
+		  , bucket: BUCKET
+		});
+		
 		console.log(env['uuid'] + " converting to " +TMP+"/"+env['uuid']+"-"+style+".jpg" + " complete ")
 		console.log(env['uuid'] + ' upload to s3 started');
 		var stream = fs.createReadStream(TMP+"/"+env['uuid']+"-"+style+".jpg");
@@ -146,6 +148,8 @@ app.get('/', function(req, res) {
 });
 
 app.post('/v1/upload', function(req, res) {
+	
+	
 	var env = {}
 	env['uuid'] = generate_uuid();
 	env['req'] = req;
