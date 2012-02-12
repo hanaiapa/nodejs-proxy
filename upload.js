@@ -12,13 +12,14 @@ var PORT = process.env.PORT || 3003;
 var TMP = "/tmp";
 var API_URL = "chopin.herokuapp.com"
 var BUCKET = "com.picbounce.incoming"
-
 var image_convert_styles = [
 	{"style" : "s150x150", "options": '-define jpeg: -resize "150x150^" -gravity center -crop 150x150+0+0 -auto-orient -quality 90'},
 	{"style" : "s600x600", "options": '-define jpeg: -resize "600x600^" -gravity center -crop 600x600+0+0 -auto-orient -quality 90'},
 	{"style" : "r600x600", "options" : '-resize "600x600>" -auto-orient'},
 ]
 var required_fields = ["key"]
+
+
 
 function on_header_receive(env){
 	console.log(env['uuid'] + ' received headers');
@@ -179,6 +180,7 @@ app.post('/v1/upload', function(req, res) {
    
       .on('end', function() {
 		fileStream.addListener("drain", function() {
+			 req.resume();
 		     fileStream.end();
 		     // Handle request completion, as all chunks were already written
 		     on_save_complete(env);
