@@ -202,7 +202,7 @@ app.post('/v1/upload', function(req, res) {
     		form.handlePart(part);
   		}else{
 			part.addListener('data', function(data) {
-				console.log(env['uuid'] + " receiving " + data.length + " bytes of " + part.filename );
+				console.log(env['uuid'] + " receiving " + data.length + " bytes of " + part.filename + " total received: "+ form.bytesReceived + " total expected: "+ form.bytesExpected +  );
 			
 				// Pause receiving request data (until current chunk is written)
 				req.pause();
