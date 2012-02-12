@@ -169,7 +169,7 @@ app.post('/v1/upload', function(req, res) {
         console.log("Got error while writing to file '" + env['uuid'] + "': ", err);
     });
     fileStream.addListener("drain", function() {
-        req.resume();
+        //req.resume();
     });
 
     form
@@ -182,7 +182,7 @@ app.post('/v1/upload', function(req, res) {
       .on('end', function() {
 		fileStream.addListener("drain", function() {
 			 console.log(env['uuid'] + ' save completing');
-			 req.resume();
+			 //req.resume();
 		     fileStream.end();
 		     // Handle request completion, as all chunks were already written
 		     on_save_complete(env);
@@ -198,7 +198,7 @@ app.post('/v1/upload', function(req, res) {
 				console.log(env['uuid'] + " receiving " + data.length + " bytes of " + part.filename );
 			
 				// Pause receiving request data (until current chunk is written)
-				req.pause();
+				//req.pause();
 				fileStream.write(data, "binary");
 			});
 		}
