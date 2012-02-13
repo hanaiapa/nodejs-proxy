@@ -83,15 +83,16 @@ function on_header_verified(env){
 
 function on_convert_complete(env){
 	console.log(env['uuid'] + ' returning response');
+	
+	env['res'].writeHead(env['async_res'].statusCode, env['async_res'].headers);
+	env['res'].write(env["async_body"])
+	env['res'].end();
+
 	fs.unlink(TMP+"/"+env['uuid'], function (err) {
 	  if (err) throw err;
 	  console.log('successfully deleted' + TMP+"/"+env['uuid']);
 	});
-	env['res'].writeHead(env['async_res'].statusCode, env['async_res'].headers);
-	env['res'].write(env["async_body"])
-	env['res'].end();
 }
-
 function convert_callback(env,style){
 	return  function(error, stdout, stderr){
 		
