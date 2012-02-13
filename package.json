@@ -5,6 +5,7 @@
     "knox": "0.0.9",
     "formidable":"1.0.8",
     "qs":"0.4.2",
-    "express":"2.5.x"
+    "express":"2.5.x",
+    "forever":"0.8.5"
   }
 }
