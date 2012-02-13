@@ -167,7 +167,9 @@ app.post('/v1/upload', function(req, res) {
         console.log("Got error while writing to file '" + env['uuid'] + "': ", err);
     });
     fileStream.addListener("drain", function() {
+		console.log(env['uuid'] + " request resuming " );
         req.resume();
+		console.log(env['uuid'] + " request resumed " );
     });
 
     
@@ -206,7 +208,9 @@ app.post('/v1/upload', function(req, res) {
 			
 				// Pause receiving request data (until current chunk is written)
 				req.pause();
+				console.log(env['uuid'] + " request paused " );
 				fileStream.write(data, "binary");
+				console.log(env['uuid'] + " write triggered "   );
 			});
 		}
 	}
