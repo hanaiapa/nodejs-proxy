@@ -83,6 +83,10 @@ function on_header_verified(env){
 
 function on_convert_complete(env){
 	console.log(env['uuid'] + ' returning response');
+	fs.unlink(TMP+"/"+env['uuid'], function (err) {
+	  if (err) throw err;
+	  console.log('successfully deleted' + TMP+"/"+env['uuid']);
+	});
 	env['res'].writeHead(env['async_res'].statusCode, env['async_res'].headers);
 	env['res'].write(env["async_body"])
 	env['res'].end();
@@ -103,6 +107,10 @@ function convert_callback(env,style){
 		s3Client.putStream(stream, env['uuid']+"/"+style+".jpg", function(err, result){
 			console.log(env['uuid'] + ' '+style+' upload to s3 complete');
 			trigger_local_event(env,style,"complete");
+			fs.unlink(TMP+"/"+env['uuid']+"-"+style+".jpg", function (err) {
+			  if (err) throw err;
+			  console.log('successfully deleted' + TMP+"/"+env['uuid']+"-"+style+".jpg");
+			});
 		});
 	}
 	
