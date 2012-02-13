@@ -67,6 +67,13 @@ function on_header_verified(env){
 	}
 	var post_req = http.request(options, function(res) {
 		console.log("sent")
+		console.log(res.statusCode)
+		env["async_res"] = res
+		env["async_body"] = ""
+		res.on('data', function(chunk) {
+		    console.log("Body chunk: " + chunk);
+			env["async_body"] += chunk
+		});
 		trigger_local_event(env,"data_posted","complete");
 	});
 	post_req.write(qs.stringify(data));
@@ -76,9 +83,8 @@ function on_header_verified(env){
 
 function on_convert_complete(env){
 	console.log(env['uuid'] + ' returning response');
-	env['res'].writeHead(200, {'content-type': 'text/plain'});
-	env['res'].write('received fields:\n\n '+util.inspect(env['fields']));
-	env['res'].write('\n\n');
+	env['res'].writeHead(env['async_res'].statusCode, env['async_res'].headers);
+	env['res'].write(env["async_body"])
 	env['res'].end();
 }
 
